@@ -1,0 +1,14 @@
+{
+  "name": "codereview-platform",
+  "version": "1.0.0",
+  "description": "CodeReview AI Platform — Full Stack",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "seed": "cd backend && node seed.js",
+    "seed:force": "cd backend && node seed.js --force",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm start"
+  },
+  "private": true
+}
