@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const employeeRoutes = require("./routes/employees");
 const reviewRoutes = require("./routes/reviews");
 const analyticsRoutes = require("./routes/analytics");
+const githubRoutes = require("./routes/github");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/auth",      authRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/reviews",   reviewRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/github",    githubRoutes);
 
 // ── Error handler ────────────────────────────────────────────────
 app.use(errorHandler);

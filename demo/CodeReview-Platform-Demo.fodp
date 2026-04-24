@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document
+  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+  xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  office:version="1.2"
+  office:mimetype="application/vnd.oasis.opendocument.presentation">
+
+  <office:meta>
+    <dc:title>CodeReview Platform — Demo</dc:title>
+    <dc:creator>CodeReview Platform</dc:creator>
+  </office:meta>
+
+  <office:styles>
+    <style:style style:name="Title" style:family="paragraph">
+      <style:text-properties fo:font-size="34pt" fo:font-weight="bold" fo:color="#0F172A" />
+    </style:style>
+    <style:style style:name="Subtitle" style:family="paragraph">
+      <style:text-properties fo:font-size="18pt" fo:color="#334155" />
+    </style:style>
+    <style:style style:name="H2" style:family="paragraph">
+      <style:text-properties fo:font-size="24pt" fo:font-weight="bold" fo:color="#0F172A" />
+    </style:style>
+    <style:style style:name="Body" style:family="paragraph">
+      <style:text-properties fo:font-size="16pt" fo:color="#0F172A" />
+    </style:style>
+    <style:style style:name="Muted" style:family="paragraph">
+      <style:text-properties fo:font-size="12pt" fo:color="#475569" />
+    </style:style>
+  </office:styles>
+
+  <office:body>
+    <office:presentation>
+
+      <!-- Slide 1 -->
+      <draw:page draw:name="Slide 1" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1.2cm" svg:width="24.5cm" svg:height="3cm">
+          <text:p text:style-name="Title">CodeReview Platform</text:p>
+          <text:p text:style-name="Subtitle">AI-assisted code review + analytics + GitHub PR reviews</text:p>
+          <text:p text:style-name="Muted">Demo deck for Web Team • 2026</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 2 -->
+      <draw:page draw:name="Slide 2" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Agenda</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">• What problem we’re solving</text:p>
+          <text:p text:style-name="Body">• Product walkthrough (Snippet + GitHub PR review)</text:p>
+          <text:p text:style-name="Body">• Architecture (React + Node + Postgres)</text:p>
+          <text:p text:style-name="Body">• Permissions (Admin/Lead vs Developer)</text:p>
+          <text:p text:style-name="Body">• Demo plan + roadmap</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 3 -->
+      <draw:page draw:name="Slide 3" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Problem</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">• Reviews can be slow and inconsistent</text:p>
+          <text:p text:style-name="Body">• Security/performance issues slip through</text:p>
+          <text:p text:style-name="Body">• Hard to measure team quality trends over time</text:p>
+          <text:p text:style-name="Body">• GitHub PR changes are scattered across files</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 4 -->
+      <draw:page draw:name="Slide 4" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Solution</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">• Run AI reviews with structured output (score + issues + fix)</text:p>
+          <text:p text:style-name="Body">• Save results into Postgres for dashboards + analytics</text:p>
+          <text:p text:style-name="Body">• Two review sources:</text:p>
+          <text:p text:style-name="Body">  – Paste snippet manually</text:p>
+          <text:p text:style-name="Body">  – Analyze a GitHub Pull Request (diff-based review)</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 5 -->
+      <draw:page draw:name="Slide 5" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Key Features</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">• Login + Sign up (role, department, job title; avatar initials auto-generated)</text:p>
+          <text:p text:style-name="Body">• New Review: Snippet mode (paste code → AI report)</text:p>
+          <text:p text:style-name="Body">• New Review: GitHub PR mode (repo + PR# → AI report on PR changes)</text:p>
+          <text:p text:style-name="Body">• Code Reviews list + detail modal</text:p>
+          <text:p text:style-name="Body">• Dashboard analytics + Performance trends</text:p>
+          <text:p text:style-name="Body">• Role-based access control (Admin/Lead = all data, Developer = own data)</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 6 -->
+      <draw:page draw:name="Slide 6" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Architecture</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">Frontend (React + Vite)</text:p>
+          <text:p text:style-name="Body">• Auth + pages: Dashboard, Reviews, New Review, Performance</text:p>
+          <text:p text:style-name="Body"></text:p>
+          <text:p text:style-name="Body">Backend (Node.js + Express)</text:p>
+          <text:p text:style-name="Body">• REST APIs: /auth, /employees, /reviews, /analytics, /github</text:p>
+          <text:p text:style-name="Body"></text:p>
+          <text:p text:style-name="Body">Database (PostgreSQL)</text:p>
+          <text:p text:style-name="Body">• employees, code_reviews, review_issues</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 7 -->
+      <draw:page draw:name="Slide 7" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">How GitHub PR Review Works</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">1) User enters owner/repo + PR number</text:p>
+          <text:p text:style-name="Body">2) Backend fetches PR + changed files via GitHub API</text:p>
+          <text:p text:style-name="Body">3) Backend builds a review input from patches/diff</text:p>
+          <text:p text:style-name="Body">4) Gemini returns structured JSON (score, issues, suggested fix)</text:p>
+          <text:p text:style-name="Body">5) Result is saved to Postgres with PR metadata</text:p>
+          <text:p text:style-name="Muted">Endpoint: POST /api/github/pr/analyze (requires JWT + GITHUB_TOKEN)</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 8 -->
+      <draw:page draw:name="Slide 8" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Permissions (RBAC)</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">Admin / Lead</text:p>
+          <text:p text:style-name="Body">• Can view all employees, all reviews, full dashboard</text:p>
+          <text:p text:style-name="Body"></text:p>
+          <text:p text:style-name="Body">Developer</text:p>
+          <text:p text:style-name="Body">• Can view only own performance, own reviews, own dashboard stats</text:p>
+          <text:p text:style-name="Muted">Enforced server-side on /employees, /employees/:id/stats, /reviews, /analytics</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 9 -->
+      <draw:page draw:name="Slide 9" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Live Demo Plan (5–7 minutes)</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">1) Sign up a new user (role + dept + job title)</text:p>
+          <text:p text:style-name="Body">2) New Review (Snippet): run AI review and show saved result</text:p>
+          <text:p text:style-name="Body">3) New Review (GitHub PR): enter repo + PR# and run review</text:p>
+          <text:p text:style-name="Body">4) Dashboard: show totals and language breakdown</text:p>
+          <text:p text:style-name="Body">5) Performance: show trend graph</text:p>
+          <text:p text:style-name="Body">6) RBAC: login as developer vs admin and compare visibility</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 10 -->
+      <draw:page draw:name="Slide 10" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Roadmap</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">• GitHub App + Webhooks + Checks API (native PR comments/check runs)</text:p>
+          <text:p text:style-name="Body">• Reviewer suggestions + CODEOWNERS support</text:p>
+          <text:p text:style-name="Body">• Trend insights (high-churn files, repeated issue patterns)</text:p>
+          <text:p text:style-name="Body">• Team policies (required reviewers, test checklist)</text:p>
+          <text:p text:style-name="Body">• Deployment hardening + observability</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 11 -->
+      <draw:page draw:name="Slide 11" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1cm" svg:width="25cm" svg:height="1.8cm">
+          <text:p text:style-name="H2">Hosting (Free options)</text:p>
+        </draw:text-box>
+        <draw:text-box svg:x="1.2cm" svg:y="3cm" svg:width="25cm" svg:height="12cm">
+          <text:p text:style-name="Body">Recommended quick demo hosting (no card): Render</text:p>
+          <text:p text:style-name="Body">• Frontend: Render Static Site</text:p>
+          <text:p text:style-name="Body">• Backend: Render Web Service (free tier)</text:p>
+          <text:p text:style-name="Body">• Database: Render Postgres (free tier)</text:p>
+          <text:p text:style-name="Muted">Note: free tiers have limitations (sleep/expiry). Good for demos.</text:p>
+        </draw:text-box>
+      </draw:page>
+
+      <!-- Slide 12 -->
+      <draw:page draw:name="Slide 12" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:text-box svg:x="1cm" svg:y="1.2cm" svg:width="25cm" svg:height="3cm">
+          <text:p text:style-name="Title">Thank you</text:p>
+          <text:p text:style-name="Subtitle">Questions + feedback</text:p>
+          <text:p text:style-name="Muted">Next: align on GitHub App + native checks</text:p>
+        </draw:text-box>
+      </draw:page>
+
+    </office:presentation>
+  </office:body>
+</office:document>
+

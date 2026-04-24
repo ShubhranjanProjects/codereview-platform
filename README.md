@@ -57,6 +57,7 @@ Edit `.env`:
 DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
 JWT_SECRET=any-long-random-string-at-least-32-chars
 GEMINI_API_KEY=sk-ant-api03-...
+GITHUB_TOKEN=ghp_...   # optional (needed for GitHub PR reviews)
 PORT=4000
 FRONTEND_URL=http://localhost:5173
 ```
@@ -171,6 +172,7 @@ The system prompt instructs Claude to act as a senior engineer and return struct
 | GET | `/api/employees/:id/stats` | Score trend + monthly stats |
 | GET | `/api/reviews` | All reviews (filterable) |
 | POST | `/api/reviews/analyze` | Run AI review + save to DB |
+| POST | `/api/github/pr/analyze` | Run AI review on a GitHub PR + save to DB |
 | GET | `/api/analytics/dashboard` | KPIs + language breakdown |
 
 ---

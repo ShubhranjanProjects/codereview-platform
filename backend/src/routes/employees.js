@@ -2,13 +2,24 @@ const router = require("express").Router();
 const pool   = require("../db");
 const { authenticate, requireRole } = require("../middleware/auth");
 
+function isPrivileged(user) {
+  return user?.role === "admin" || user?.role === "lead";
+}
+
 // GET /api/employees
 router.get("/", authenticate, async (req, res, next) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT id, name, email, role, job_title, department, avatar, created_at
-       FROM employees ORDER BY name`
-    );
+    const onlySelf = !isPrivileged(req.user);
+    const { rows } = onlySelf
+      ? await pool.query(
+          `SELECT id, name, email, role, job_title, department, avatar, created_at
+           FROM employees WHERE id=$1 ORDER BY name`,
+          [req.user.id]
+        )
+      : await pool.query(
+          `SELECT id, name, email, role, job_title, department, avatar, created_at
+           FROM employees ORDER BY name`
+        );
     res.json(rows);
   } catch (err) { next(err); }
 });
@@ -16,6 +27,9 @@ router.get("/", authenticate, async (req, res, next) => {
 // GET /api/employees/:id
 router.get("/:id", authenticate, async (req, res, next) => {
   try {
+    if (!isPrivileged(req.user) && req.params.id !== req.user.id) {
+      return res.status(403).json({ error: "Insufficient permissions" });
+    }
     const { rows } = await pool.query(
       `SELECT id, name, email, role, job_title, department, avatar, created_at
        FROM employees WHERE id=$1`,
@@ -30,6 +44,9 @@ router.get("/:id", authenticate, async (req, res, next) => {
 router.get("/:id/stats", authenticate, async (req, res, next) => {
   try {
     const { id } = req.params;
+    if (!isPrivileged(req.user) && id !== req.user.id) {
+      return res.status(403).json({ error: "Insufficient permissions" });
+    }
 
     const summary = await pool.query(
       `SELECT

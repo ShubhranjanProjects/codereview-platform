@@ -17,11 +17,13 @@ const api = (() => {
   };
   return {
     login:         b  => req("/auth/login",      { method:"POST", body:JSON.stringify(b) }),
+    register:      b  => req("/auth/register",   { method:"POST", body:JSON.stringify(b) }),
     me:            ()  => req("/auth/me"),
     getEmployees:  ()  => req("/employees"),
     getEmpStats:   id  => req(`/employees/${id}/stats`),
     getReviews:    p   => req("/reviews?" + new URLSearchParams(p||{})),
     analyzeCode:   b   => req("/reviews/analyze", { method:"POST", body:JSON.stringify(b) }),
+    analyzeGithubPr: b => req("/github/pr/analyze", { method:"POST", body:JSON.stringify(b) }),
     getDashboard:  ()  => req("/analytics/dashboard"),
   };
 })();
@@ -139,8 +141,14 @@ function LoadingBox({ text="Loading…" }) {
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 function LoginPage({ onLogin }) {
+  const [mode, setMode] = useState("login"); // login | signup
   const [email, setEmail] = useState("");
   const [pass,  setPass]  = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [name,  setName]  = useState("");
+  const [role,  setRole]  = useState("developer");
+  const [jobTitle, setJobTitle] = useState("");
+  const [dept, setDept] = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
 
@@ -153,7 +161,19 @@ function LoginPage({ onLogin }) {
   const submit = async () => {
     setErr(""); setBusy(true);
     try {
-      const { token, user } = await api.login({ email, password:pass });
+      const action = mode === "signup" ? api.register : api.login;
+      const body = mode === "signup"
+        ? {
+            name,
+            email,
+            password: pass,
+            role,
+            job_title: jobTitle,
+            department: dept,
+          }
+        : { email, password: pass };
+
+      const { token, user } = await action(body);
       localStorage.setItem("cr_token", token);
       onLogin(user);
     } catch(e) { setErr(e.message); }
@@ -172,27 +192,109 @@ function LoginPage({ onLogin }) {
         </div>
 
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:28}}>
-          {[["Email","email","you@company.com",email,setEmail],["Password","password","••••••••",pass,setPass]].map(([lbl,type,ph,val,set])=>(
-            <div key={lbl} style={{marginBottom:16}}>
-              <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>{lbl}</label>
-              <input className="input" type={type} placeholder={ph} value={val} onChange={e=>set(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+          <div style={{display:"flex",gap:2,background:C.surface,padding:4,borderRadius:10,marginBottom:16}}>
+            {[
+              { id:"login", label:"Login" },
+              { id:"signup", label:"Sign up" },
+            ].map(t => (
+              <button
+                key={t.id}
+                className={`tab ${mode===t.id?"active":""}`}
+                style={{flex:1}}
+                onClick={()=>{ setMode(t.id); setErr(""); }}
+                type="button"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {mode === "signup" && (
+            <>
+              <div style={{marginBottom:16}}>
+                <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
+                <input className="input" type="text" placeholder="Your name" value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+              </div>
+
+              <div style={{display:"flex",gap:10,marginBottom:16}}>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Role</label>
+                  <select className="select" style={{width:"100%"}} value={role} onChange={e=>setRole(e.target.value)}>
+                    <option value="developer">Developer</option>
+                    <option value="lead">Lead</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Department</label>
+                  <input className="input" type="text" placeholder="Backend / Frontend / ..." value={dept} onChange={e=>setDept(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+                </div>
+              </div>
+
+              <div style={{marginBottom:16}}>
+                <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Job title</label>
+                <input className="input" type="text" placeholder="Senior Backend Dev" value={jobTitle} onChange={e=>setJobTitle(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+              </div>
+            </>
+          )}
+
+          <div style={{marginBottom:16}}>
+            <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Email</label>
+            <input className="input" type="email" placeholder="you@company.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+          </div>
+
+          <div style={{marginBottom:16}}>
+            <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Password</label>
+            <div style={{position:"relative"}}>
+              <input
+                className="input"
+                type={showPass ? "text" : "password"}
+                placeholder="••••••••"
+                value={pass}
+                onChange={e=>setPass(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&submit()}
+                style={{paddingRight:52}}
+              />
+              <button
+                type="button"
+                onClick={()=>setShowPass(s=>!s)}
+                style={{
+                  position:"absolute",
+                  right:8,
+                  top:"50%",
+                  transform:"translateY(-50%)",
+                  background:"transparent",
+                  border:`1px solid ${C.border}`,
+                  color: showPass ? C.text : C.muted,
+                  borderRadius:8,
+                  padding:"6px 10px",
+                  cursor:"pointer",
+                  fontSize:12,
+                  lineHeight:1,
+                }}
+                aria-label={showPass ? "Hide password" : "Show password"}
+              >
+                {showPass ? "Hide" : "View"}
+              </button>
             </div>
-          ))}
+          </div>
 
           {err && <div style={{background:`${C.red}15`,border:`1px solid ${C.red}30`,borderRadius:8,padding:"10px 14px",fontSize:13,color:C.red,marginBottom:16}}>{err}</div>}
 
           <button className="btn btn-primary" style={{width:"100%",justifyContent:"center"}} onClick={submit} disabled={busy||!email||!pass}>
-            {busy ? <><Spinner/> Signing in…</> : "Sign in"}
+            {busy ? <><Spinner/> {mode==="signup" ? "Creating account…" : "Signing in…"} </> : (mode==="signup" ? "Create account" : "Sign in")}
           </button>
 
-          <div style={{marginTop:20,padding:14,background:C.surface,borderRadius:8}}>
+          {mode === "login" && (
+            <div style={{marginTop:20,padding:14,background:C.surface,borderRadius:8}}>
             <div style={{fontSize:11,color:C.muted,fontWeight:600,marginBottom:8,textTransform:"uppercase",letterSpacing:".04em"}}>Demo accounts</div>
             {demo.map(d=>(
               <div key={d.email} style={{fontSize:12,color:C.dim,marginBottom:4,cursor:"pointer"}} onClick={()=>{setEmail(d.email);setPass(d.pass)}}>
                 <span style={{color:C.accent}}>{d.email}</span> / {d.pass} <span style={{color:C.muted}}>({d.role})</span>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -207,7 +309,7 @@ function Sidebar({ page, setPage, user, onLogout }) {
     {id:"new-review", icon:"＋", label:"New Review"},
     {id:"performance",icon:"◎", label:"Performance"},
     {id:"team",       icon:"◉", label:"Team"},
-  ];
+  ].filter(n => user.role !== "developer" ? true : n.id !== "team");
   return (
     <div style={{width:220,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",
       padding:"20px 12px",position:"fixed",top:0,left:0,bottom:0,zIndex:100}}>
@@ -256,6 +358,7 @@ function DashboardPage() {
   if (!data) return <LoadingBox text="Loading dashboard…"/>;
 
   const { totals, byLanguage=[], teamSnapshot=[] } = data;
+  const avgScore = Number.parseFloat(totals?.avg_score) || 0;
 
   return (
     <div className="fade-in">
@@ -266,7 +369,7 @@ function DashboardPage() {
 
       <div style={{display:"flex",gap:12,marginBottom:24,flexWrap:"wrap"}}>
         <MetricCard label="Total Reviews"   value={totals.total_reviews}  sub="All time"         color={C.accent}/>
-        <MetricCard label="Avg Score"       value={`${totals.avg_score}/10`} sub="Platform wide" color={scoreColor(parseFloat(totals.avg_score))}/>
+        <MetricCard label="Avg Score"       value={`${avgScore.toFixed(1)}/10`} sub="Platform wide" color={scoreColor(avgScore)}/>
         <MetricCard label="Critical Issues" value={totals.critical_count} sub="Need attention"   color={C.red}/>
         <MetricCard label="High Issues"     value={totals.high_count}     sub="Require review"   color={C.orange}/>
       </div>
@@ -451,16 +554,27 @@ function NewReviewPage({ showToast }) {
   const [code,      setCode]      = useState("");
   const [empId,     setEmpId]     = useState("");
   const [language,  setLanguage]  = useState("Python");
+  const [mode,      setMode]      = useState("snippet"); // snippet | github_pr
+  const [repoFull,  setRepoFull]  = useState("");
+  const [prNumber,  setPrNumber]  = useState("");
   const [loading,   setLoading]   = useState(false);
   const [result,    setResult]    = useState(null);
 
   useEffect(() => { api.getEmployees().then(setEmployees).catch(console.error); }, []);
 
   const analyze = async () => {
-    if (!code.trim() || !empId) return;
+    if (!empId) return;
     setLoading(true); setResult(null);
     try {
-      const data = await api.analyzeCode({ employee_id:empId, language, code_snippet:code, save:true });
+      let data;
+      if (mode === "github_pr") {
+        const [owner, repo] = (repoFull || "").split("/").map(s => s.trim()).filter(Boolean);
+        if (!owner || !repo || !prNumber) throw new Error("Enter repo as owner/repo and a PR number");
+        data = await api.analyzeGithubPr({ employee_id: empId, owner, repo, number: prNumber, language, save: true });
+      } else {
+        if (!code.trim()) return;
+        data = await api.analyzeCode({ employee_id:empId, language, code_snippet:code, save:true, source_type:"snippet" });
+      }
       setResult(data);
       showToast("Review saved to database!", "success");
     } catch(e) {
@@ -510,13 +624,43 @@ function NewReviewPage({ showToast }) {
                 </select>
               </div>
             </div>
-            <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Code Snippet</label>
-            <textarea className="textarea" style={{minHeight:300}} placeholder={`Paste ${language} code here…`}
-              value={code} onChange={e=>setCode(e.target.value)}/>
+
+            <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
+              <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase"}}>Source</label>
+              <div className="tabs">
+                {[
+                  { id:"snippet", label:"Snippet" },
+                  { id:"github_pr", label:"GitHub PR" },
+                ].map(t => (
+                  <button key={t.id} className={`tab ${mode===t.id?"active":""}`} onClick={()=>setMode(t.id)}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {mode === "github_pr" ? (
+              <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+                <div style={{flex:1,minWidth:220}}>
+                  <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Repo (owner/repo)</label>
+                  <input className="input" placeholder="facebook/react" value={repoFull} onChange={e=>setRepoFull(e.target.value)}/>
+                </div>
+                <div style={{width:160}}>
+                  <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>PR #</label>
+                  <input className="input" placeholder="1234" value={prNumber} onChange={e=>setPrNumber(e.target.value)}/>
+                </div>
+              </div>
+            ) : (
+              <>
+                <label style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:".05em",textTransform:"uppercase",display:"block",marginBottom:6}}>Code Snippet</label>
+                <textarea className="textarea" style={{minHeight:300}} placeholder={`Paste ${language} code here…`}
+                  value={code} onChange={e=>setCode(e.target.value)}/>
+              </>
+            )}
           </div>
 
           <button className="btn btn-primary" style={{width:"100%",justifyContent:"center",padding:"13px"}}
-            onClick={analyze} disabled={loading||!code.trim()||!empId}>
+            onClick={analyze} disabled={loading||!empId || (mode==="snippet" && !code.trim()) || (mode==="github_pr" && (!repoFull.trim() || !prNumber.trim()))}>
             {loading ? <><Spinner/> AI is analysing…</> : "⚡ Run AI Review"}
           </button>
         </div>
@@ -633,20 +777,22 @@ function PerformancePage() {
 
       {loadingE ? <LoadingBox/> : (
         <>
-          <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
-            {employees.map(e=>(
-              <button key={e.id} onClick={()=>setSelected(e.id)} style={{
-                display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:8,
-                border:`1px solid ${selected===e.id?C.accent:C.border}`,
-                background:selected===e.id?`${C.accent}15`:C.surface,
-                color:selected===e.id?C.accent:C.muted,
-                cursor:"pointer",fontSize:13,fontFamily:"Space Grotesk,sans-serif",transition:"all .15s",
-              }}>
-                <Avatar initials={e.avatar||"?"} size={22} color={selected===e.id?C.accent:C.purple}/>
-                {e.name.split(" ")[0]}
-              </button>
-            ))}
-          </div>
+          {employees.length > 1 && (
+            <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+              {employees.map(e=>(
+                <button key={e.id} onClick={()=>setSelected(e.id)} style={{
+                  display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:8,
+                  border:`1px solid ${selected===e.id?C.accent:C.border}`,
+                  background:selected===e.id?`${C.accent}15`:C.surface,
+                  color:selected===e.id?C.accent:C.muted,
+                  cursor:"pointer",fontSize:13,fontFamily:"Space Grotesk,sans-serif",transition:"all .15s",
+                }}>
+                  <Avatar initials={e.avatar||"?"} size={22} color={selected===e.id?C.accent:C.purple}/>
+                  {e.name.split(" ")[0]}
+                </button>
+              ))}
+            </div>
+          )}
 
           {loadingS ? <LoadingBox text="Loading stats…"/> : stats && (
             <>

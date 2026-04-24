@@ -1,6 +1,24 @@
 const router = require("express").Router();
 const pool   = require("../db");
 const { authenticate } = require("../middleware/auth");
+const { analyzeWithGemini } = require("../services/geminiReview");
+
+function isPrivileged(user) {
+  return user?.role === "admin" || user?.role === "lead";
+}
+
+function guessLikelyLanguage(code) {
+  const s = String(code || "");
+  const head = s.slice(0, 4000);
+
+  // Very lightweight heuristics (fast, no deps). It’s fine if imperfect.
+  if (/\bpublic\s+class\b|\bSystem\.out\.println\b|\bimport\s+java\./.test(head)) return "Java";
+  if (/\bpackage\s+main\b|\bfmt\.\w+\(/.test(head)) return "Go";
+  if (/\bdef\s+\w+\s*\(|^\s*import\s+\w+/m.test(head) && !/[;{}]/.test(head)) return "Python";
+  if (/\bconsole\.log\b|\bfunction\s+\w+\s*\(|=>/.test(head)) return "JavaScript";
+  if (/\binterface\s+\w+|\btype\s+\w+\s*=|:\s*\w+(\[\])?(\s*\|\s*\w+)+/.test(head)) return "TypeScript";
+  return null;
+}
 
 // ── GET /api/reviews ──────────────────────────────────────────────────────────
 router.get("/", authenticate, async (req, res, next) => {
@@ -9,7 +27,16 @@ router.get("/", authenticate, async (req, res, next) => {
     const conditions = [], params = [];
     let idx = 1;
 
-    if (employee_id) { conditions.push(`cr.employee_id=$${idx++}`); params.push(employee_id); }
+    if (employee_id) {
+      if (!isPrivileged(req.user) && employee_id !== req.user.id) {
+        return res.status(403).json({ error: "Insufficient permissions" });
+      }
+      conditions.push(`cr.employee_id=$${idx++}`);
+      params.push(employee_id);
+    } else if (!isPrivileged(req.user)) {
+      conditions.push(`cr.employee_id=$${idx++}`);
+      params.push(req.user.id);
+    }
     if (severity)    { conditions.push(`cr.severity_label=$${idx++}`); params.push(severity); }
     if (language)    { conditions.push(`cr.language=$${idx++}`); params.push(language); }
 
@@ -37,88 +64,36 @@ router.get("/", authenticate, async (req, res, next) => {
 // ── POST /api/reviews/analyze ─────────────────────────────────────────────────
 router.post("/analyze", authenticate, async (req, res, next) => {
   try {
-    const { employee_id, language, code_snippet, save = true } = req.body;
+    const {
+      employee_id,
+      language,
+      code_snippet,
+      save = true,
+      source_type = "snippet",
+      github_repo_full_name = null,
+      github_pr_number = null,
+      github_pr_url = null,
+      github_head_sha = null,
+    } = req.body;
 
     if (!employee_id || !language || !code_snippet) {
       return res.status(400).json({ error: "employee_id, language and code_snippet required" });
     }
 
+    // Catch obvious “selected Python but pasted Java” mistakes early.
+    const guessed = guessLikelyLanguage(code_snippet);
+    if (guessed && String(language).toLowerCase() !== guessed.toLowerCase()) {
+      return res.status(400).json({
+        error: `Selected language is ${language}, but the code looks like ${guessed}. Please correct the language and try again.`,
+      });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("❌ Missing GEMINI_API_KEY");
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY in backend" });
-    }
-
-    // 🔥 Prompt
-    const prompt = `
-You are a senior software engineer and security expert.
-
-Analyze the code and return ONLY valid JSON:
-
-{
-  "severity_score": <1.0-10.0>,
-  "confidence": "<High|Medium|Low>",
-  "severity_label": "<critical|high|medium|low>",
-  "summary": "<2-3 sentence summary>",
-  "code_quality": ["<issue>"],
-  "security_issues": ["<issue>"],
-  "performance_issues": ["<issue>"],
-  "naming_design": ["<issue>"],
-  "improved_snippet": "<fix>"
-}
-
-Language: ${language}
-
-Code:
-${code_snippet.slice(0, 4000)}
-`;
-
-    console.log("🚀 Calling Gemini API...");
-
-    const geminiRes = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-goog-api-key": apiKey,   // 👈 IMPORTANT (match curl)
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }],
-            },
-          ],
-        }),
-      }
-    );
-
-    const rawText = await geminiRes.text();
-    console.log("📥 Gemini RAW Response:", rawText);
-
-    if (!geminiRes.ok) {
-      console.error("❌ Gemini API Error:", rawText);
-      return res.status(502).json({ error: "AI service error (Gemini failed)" });
-    }
-
-    let aiData;
-    try {
-      aiData = JSON.parse(rawText);
-    } catch (e) {
-      console.error("❌ JSON parse failed:", rawText);
-      return res.status(502).json({ error: "Invalid AI response format" });
-    }
-
-    const raw =
-      aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-
-    let parsed;
-    try {
-      parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-    } catch (e) {
-      console.error("❌ Failed to parse AI JSON:", raw);
-      return res.status(502).json({ error: "AI returned unparseable JSON" });
-    }
+    const { parsed, issues: allIssues } = await analyzeWithGemini({
+      apiKey,
+      language,
+      code: code_snippet,
+    });
 
     const {
       severity_score,
@@ -132,13 +107,6 @@ ${code_snippet.slice(0, 4000)}
       improved_snippet,
     } = parsed;
 
-    const allIssues = [
-      ...code_quality.map(d       => ({ category: "quality",       description: d })),
-      ...security_issues.map(d    => ({ category: "security",      description: d })),
-      ...performance_issues.map(d => ({ category: "performance",   description: d })),
-      ...naming_design.map(d      => ({ category: "naming_design", description: d })),
-    ];
-
     let savedReview = null;
 
     if (save) {
@@ -149,8 +117,9 @@ ${code_snippet.slice(0, 4000)}
         const { rows } = await client.query(
           `INSERT INTO code_reviews 
           (employee_id, reviewed_by, language, code_snippet, severity_score, severity_label, confidence, summary,
-           security_count, performance_count, quality_count, improved_snippet)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+           security_count, performance_count, quality_count, improved_snippet,
+           source_type, github_repo_full_name, github_pr_number, github_pr_url, github_head_sha)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
           [
             employee_id,
             req.user.id,
@@ -164,6 +133,11 @@ ${code_snippet.slice(0, 4000)}
             performance_issues.length,
             code_quality.length,
             improved_snippet || null,
+            source_type,
+            github_repo_full_name,
+            github_pr_number,
+            github_pr_url,
+            github_head_sha,
           ]
         );
 
@@ -191,7 +165,9 @@ ${code_snippet.slice(0, 4000)}
     });
 
   } catch (err) {
-    console.error("❌ Analyze Error:", err);
+    if (err?.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
     next(err);
   }
 });

@@ -34,6 +34,12 @@ create table code_reviews (
   reviewed_by       uuid references employees(id),
   language          text not null,
   code_snippet      text,
+  source_type       text not null default 'snippet'
+                    check (source_type in ('snippet','github_pr')),
+  github_repo_full_name text,
+  github_pr_number      int,
+  github_pr_url         text,
+  github_head_sha       text,
   severity_score    numeric(4,1) not null check (severity_score between 1 and 10),
   severity_label    text not null check (severity_label in ('critical','high','medium','low')),
   confidence        text check (confidence in ('High','Medium','Low')),
@@ -59,6 +65,9 @@ create index on employees(email);
 create index on code_reviews(employee_id);
 create index on code_reviews(created_at desc);
 create index on code_reviews(severity_label);
+create index on code_reviews(source_type);
+create index on code_reviews(github_repo_full_name);
+create index on code_reviews(github_pr_number);
 create index on review_issues(review_id);
 
 -- ─── Auto-update updated_at ──────────────────────────────────────
